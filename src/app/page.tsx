@@ -207,15 +207,19 @@ function ProjectCta() {
 }
 
 export default async function Home() {
-  const sanityItems: SanityPortfolioItem[] = await client.fetch(
-    `*[_type == "portfolio"] | order(order asc) {
-      _id,
-      title,
-      tags,
-      coverImage,
-      order
-    }`
-  );
+  const sanityItems: SanityPortfolioItem[] = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+    ? await client
+        .fetch(
+          `*[_type == "portfolio"] | order(order asc) {
+            _id,
+            title,
+            tags,
+            coverImage,
+            order
+          }`
+        )
+        .catch(() => [])
+    : [];
 
   const projects =
     sanityItems.length > 0
