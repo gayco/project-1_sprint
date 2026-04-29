@@ -2,7 +2,7 @@ import { client } from "../../sanity/lib/client";
 import { urlFor } from "../../sanity/lib/image";
 import MobileMenu from "@/components/MobileMenu";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 const HERO_IMAGE =
   "https://www.figma.com/api/mcp/asset/b35befe5-53ed-4822-9710-9e6ff6636bfd";
