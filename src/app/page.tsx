@@ -1,6 +1,8 @@
-"use client";
+import { client } from "../../sanity/lib/client";
+import { urlFor } from "../../sanity/lib/image";
+import MobileMenu from "@/components/MobileMenu";
 
-import { useState } from "react";
+export const revalidate = 3600;
 
 const HERO_IMAGE =
   "https://www.figma.com/api/mcp/asset/b35befe5-53ed-4822-9710-9e6ff6636bfd";
@@ -40,16 +42,30 @@ const SERVICES = [
   },
 ] as const;
 
-const NAV_LINKS = ["About", "Services", "Projects", "News", "Contact"];
+const NAV_LINKS = ["About", "Services", "Projects", "News", "Contact"] as const;
 
-const PROJ_SURFING =
-  "https://www.figma.com/api/mcp/asset/8bc93d66-5a15-4641-a62c-619a51146616";
-const PROJ_CYBERPUNK =
-  "https://www.figma.com/api/mcp/asset/2d1b6db9-bfd1-4c23-8793-bdd9b3521099";
-const PROJ_AGENCY =
-  "https://www.figma.com/api/mcp/asset/8a47d1e6-373f-4494-a3a1-c9d99297eeac";
-const PROJ_MINIMAL =
-  "https://www.figma.com/api/mcp/asset/650f14d2-3a8e-4494-8145-d260678603d4";
+const FALLBACK_PROJECTS: { name: string; tags: string[]; img: string }[] = [
+  {
+    name: "Surfers paradise",
+    tags: ["Social Media", "Photography"],
+    img: "https://www.figma.com/api/mcp/asset/946e5717-55b5-4939-97f2-fc962f7a0373",
+  },
+  {
+    name: "Cyberpunk caffe",
+    tags: ["Social Media", "Photography"],
+    img: "https://www.figma.com/api/mcp/asset/4eb398ae-9097-4870-8a8d-8b0b1c8115ee",
+  },
+  {
+    name: "Agency 976",
+    tags: ["Social Media", "Photography"],
+    img: "https://www.figma.com/api/mcp/asset/5b492cac-da2e-485a-b546-c5d7d87e466c",
+  },
+  {
+    name: "Minimal Playground",
+    tags: ["Social Media", "Photography"],
+    img: "https://www.figma.com/api/mcp/asset/71ed518b-855c-4310-8242-9e6872316497",
+  },
+];
 
 const NEWS_IMG_1 =
   "https://www.figma.com/api/mcp/asset/d4d5a742-8c8d-4f7d-9093-da65698b8639";
@@ -83,12 +99,13 @@ const TESTIMONIALS: { logo: string; quote: string; author: string }[] = [
   },
 ];
 
-const PROJECTS: { name: string; tags: string[]; img: string }[] = [
-  { name: "Surfers paradise", tags: ["Social Media", "Photography"], img: PROJ_SURFING },
-  { name: "Cyberpunk caffe", tags: ["Social Media", "Photography"], img: PROJ_CYBERPUNK },
-  { name: "Agency 976", tags: ["Social Media", "Photography"], img: PROJ_AGENCY },
-  { name: "Minimal Playground", tags: ["Social Media", "Photography"], img: PROJ_MINIMAL },
-];
+type SanityPortfolioItem = {
+  _id: string;
+  title: string;
+  tags: string[] | null;
+  coverImage: { asset: { _ref: string } } | null;
+  order: number;
+};
 
 // L-shaped corner bracket, 16×16px. One shape, four orientations.
 function CornerBracket({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
@@ -189,8 +206,31 @@ function ProjectCta() {
   );
 }
 
-export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
+export default async function Home() {
+  const sanityItems: SanityPortfolioItem[] = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+    ? await client
+        .fetch(
+          `*[_type == "portfolio"] | order(order asc) {
+            _id,
+            title,
+            tags,
+            coverImage,
+            order
+          }`
+        )
+        .catch(() => [])
+    : [];
+
+  const projects =
+    sanityItems.length > 0
+      ? sanityItems.slice(0, 4).map((item, i) => ({
+          name: item.title,
+          tags: item.tags ?? [],
+          img: item.coverImage
+            ? urlFor(item.coverImage).width(900).url()
+            : (FALLBACK_PROJECTS[i]?.img ?? ""),
+        }))
+      : FALLBACK_PROJECTS;
 
   return (
     <>
@@ -217,45 +257,6 @@ export default function Home() {
         }}
       />
 
-      {/* Mobile full-screen menu */}
-      {menuOpen && (
-        <div className="md:hidden absolute inset-0 z-20 bg-black flex flex-col px-4 py-6">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-base tracking-[-0.04em] text-white capitalize">
-              H.Studio
-            </span>
-            <button
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
-              className="p-1 text-white"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <line x1="2" y1="2" x2="18" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="18" y1="2" x2="2" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-          <nav className="flex-1 flex flex-col justify-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                onClick={() => setMenuOpen(false)}
-                className="font-semibold text-[40px] tracking-[-0.04em] text-white capitalize leading-none hover:opacity-60 transition-opacity"
-              >
-                {link}
-              </a>
-            ))}
-          </nav>
-          <button
-            onClick={() => setMenuOpen(false)}
-            className="self-start bg-white text-black px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em]"
-          >
-            Let&apos;s talk
-          </button>
-        </div>
-      )}
-
       {/* Layout */}
       <div className="relative h-full flex flex-col px-4 md:px-8">
 
@@ -278,21 +279,8 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden flex flex-col gap-[5px] p-1"
-            aria-label="Open menu"
-            onClick={() => setMenuOpen(true)}
-          >
-            <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
-            <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
-            <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
-          </button>
-
-          {/* Desktop CTA */}
-          <button className="hidden md:block bg-black text-white px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em] cursor-pointer">
-            Let&apos;s talk
-          </button>
+          {/* Mobile hamburger + desktop CTA (interactive — client component) */}
+          <MobileMenu navLinks={NAV_LINKS} />
         </nav>
 
         {/* Hero body */}
@@ -567,7 +555,7 @@ export default function Home() {
 
       {/* Mobile: single stacked column */}
       <div className="md:hidden flex flex-col gap-10">
-        {PROJECTS.map((p) => (
+        {projects.map((p) => (
           <ProjectCard key={p.name} name={p.name} tags={p.tags} img={p.img} imgClassName="h-[390px]" />
         ))}
         <ProjectCta />
@@ -577,14 +565,14 @@ export default function Home() {
       <div className="hidden md:flex gap-6 items-end">
         {/* Left column — stretches to match right column height, items spread vertically */}
         <div className="flex-1 self-stretch flex flex-col justify-between min-w-0">
-          <ProjectCard name={PROJECTS[0].name} tags={PROJECTS[0].tags} img={PROJECTS[0].img} imgClassName="h-[744px]" />
-          <ProjectCard name={PROJECTS[1].name} tags={PROJECTS[1].tags} img={PROJECTS[1].img} imgClassName="h-[699px]" />
+          {projects[0] && <ProjectCard name={projects[0].name} tags={projects[0].tags} img={projects[0].img} imgClassName="h-[744px]" />}
+          {projects[1] && <ProjectCard name={projects[1].name} tags={projects[1].tags} img={projects[1].img} imgClassName="h-[699px]" />}
           <ProjectCta />
         </div>
         {/* Right column — offset 240px down, 117px gap between cards */}
         <div className="flex-1 flex flex-col gap-[117px] pt-[240px] min-w-0">
-          <ProjectCard name={PROJECTS[2].name} tags={PROJECTS[2].tags} img={PROJECTS[2].img} imgClassName="h-[699px]" />
-          <ProjectCard name={PROJECTS[3].name} tags={PROJECTS[3].tags} img={PROJECTS[3].img} imgClassName="h-[744px]" />
+          {projects[2] && <ProjectCard name={projects[2].name} tags={projects[2].tags} img={projects[2].img} imgClassName="h-[699px]" />}
+          {projects[3] && <ProjectCard name={projects[3].name} tags={projects[3].tags} img={projects[3].img} imgClassName="h-[744px]" />}
         </div>
       </div>
 
