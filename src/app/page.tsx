@@ -133,6 +133,14 @@ type SanityTestimonial = {
   logo: { asset: { _ref: string } } | null;
 };
 
+type SanityService = {
+  _id: string;
+  name: string;
+  description: string;
+  image: { asset: { _ref: string } } | null;
+  order: number;
+};
+
 // L-shaped corner bracket, 16×16px. One shape, four orientations.
 function CornerBracket({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
   const d = {
@@ -177,7 +185,7 @@ function ProjectCta() {
 export default async function Home() {
   const hasSanity = !!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 
-  const [sanityItems, sanityNews, sanityTestimonials] = hasSanity
+  const [sanityItems, sanityNews, sanityTestimonials, sanityServices] = hasSanity
     ? await Promise.all([
         client
           .fetch<SanityPortfolioItem[]>(
@@ -194,8 +202,13 @@ export default async function Home() {
             `*[_type == "testimonial"] | order(order asc) { _id, author, company, quote, logo }`
           )
           .catch((): SanityTestimonial[] => []),
+        client
+          .fetch<SanityService[]>(
+            `*[_type == "service"] | order(order asc) { _id, name, description, image, order }`
+          )
+          .catch((): SanityService[] => []),
       ])
-    : [[], [], []];
+    : [[], [], [], []];
 
   const projects =
     sanityItems.length > 0
@@ -230,6 +243,18 @@ export default async function Home() {
           author: t.author,
         }))
       : (TESTIMONIALS as { logo: string; quote: string; author: string }[]);
+
+  const services =
+    sanityServices.length > 0
+      ? sanityServices.map((s, i) => ({
+          num: `[ ${i + 1} ]`,
+          name: s.name,
+          desc: s.description,
+          img: s.image
+            ? urlFor(s.image).width(800).url()
+            : (SERVICES[i]?.img ?? ""),
+        }))
+      : SERVICES.map((s) => ({ ...s, desc: SERVICE_DESC }));
 
   return (
     <>
@@ -316,20 +341,20 @@ export default async function Home() {
 
       <span className="font-mono text-[14px] text-white uppercase leading-[1.1]">[ services ]</span>
 
-      {/* [4] DELIVERABLES */}
+      {/* [N] DELIVERABLES */}
       <div className="flex items-center justify-between font-sans font-light text-white uppercase tracking-[-0.08em] whitespace-nowrap text-[32px] md:text-[6.67vw] 2xl:text-[96px]">
-        <span>[4]</span>
+        <span>[{services.length}]</span>
         <span>Deliverables</span>
       </div>
 
       {/* Service list */}
       <div className="flex flex-col gap-12">
-        {SERVICES.map((s) => (
+        {services.map((s) => (
           <ServiceItem
             key={s.num}
             num={s.num}
             name={s.name}
-            desc={SERVICE_DESC}
+            desc={s.desc}
             img={s.img}
           />
         ))}
