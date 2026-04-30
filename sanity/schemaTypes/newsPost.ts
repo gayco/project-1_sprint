@@ -12,6 +12,20 @@ export const newsPost = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "category",
+      title: "Category",
+      type: "string",
+      options: {
+        list: [
+          { title: "Brand", value: "Brand" },
+          { title: "Photography", value: "Photography" },
+          { title: "Web Design", value: "Web Design" },
+          { title: "Marketing", value: "Marketing" },
+          { title: "Behind the Scenes", value: "Behind the Scenes" },
+        ],
+      },
+    }),
+    defineField({
       name: "blurb",
       title: "Blurb",
       type: "text",

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { ContactModalProvider } from "@/context/ContactModalContext";
+import ContactModal from "@/components/ContactModal";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,7 +38,12 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <ContactModalProvider>
+          {children}
+          <ContactModal />
+        </ContactModalProvider>
+      </body>
     </html>
   );
 }

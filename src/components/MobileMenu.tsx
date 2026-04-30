@@ -1,9 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import Link from "next/link";
+import gsap from "gsap";
+import LetsTalkButton from "@/components/LetsTalkButton";
 
-export default function MobileMenu({ navLinks }: { navLinks: readonly string[] }) {
+const HREF: Record<string, string> = {
+  about:    "/about",
+  services: "/services",
+  projects: "/projects",
+  news:     "/news",
+  contact:  "/contact",
+};
+
+export default function MobileMenu({
+  navLinks,
+  isDark = false,
+}: {
+  navLinks: readonly string[];
+  isDark?: boolean;
+}) {
   const [open, setOpen] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const line1 = useRef<HTMLSpanElement>(null);
+  const line2 = useRef<HTMLSpanElement>(null);
+  const line3 = useRef<HTMLSpanElement>(null);
+
+  // Transition hamburger line colour with the navbar theme
+  useEffect(() => {
+    const color = isDark ? "#fff" : "#000";
+    [line1, line2, line3].forEach(r => {
+      if (r.current) gsap.to(r.current, { backgroundColor: color, duration: 0.3, ease: "power1.out" });
+    });
+  }, [isDark]);
+
+  // Animate overlay in on open
+  useEffect(() => {
+    if (!open) return;
+    const overlay = overlayRef.current;
+    const links = linkRefs.current.filter(Boolean);
+    gsap.from(overlay, { opacity: 0, y: -12, duration: 0.3, ease: "power2.out" });
+    gsap.from(links, { y: 16, opacity: 0, duration: 0.35, stagger: 0.06, ease: "power2.out", delay: 0.1 });
+  }, [open]);
+
+  const closeMenu = () => {
+    gsap.to(overlayRef.current, {
+      opacity: 0,
+      y: -8,
+      duration: 0.25,
+      ease: "power2.in",
+      onComplete: () => setOpen(false),
+    });
+  };
 
   return (
     <>
@@ -13,52 +62,46 @@ export default function MobileMenu({ navLinks }: { navLinks: readonly string[] }
         aria-label="Open menu"
         onClick={() => setOpen(true)}
       >
-        <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
-        <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
-        <span className="block w-[18px] h-[1.5px] bg-black rounded-full" />
+        <span ref={line1} className="block w-[18px] h-[1.5px] rounded-full" style={{ backgroundColor: isDark ? "#fff" : "#000" }} />
+        <span ref={line2} className="block w-[18px] h-[1.5px] rounded-full" style={{ backgroundColor: isDark ? "#fff" : "#000" }} />
+        <span ref={line3} className="block w-[18px] h-[1.5px] rounded-full" style={{ backgroundColor: isDark ? "#fff" : "#000" }} />
       </button>
 
       {/* Desktop CTA */}
-      <button className="hidden md:block bg-black text-white px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em] cursor-pointer">
-        Let&apos;s talk
-      </button>
+      <LetsTalkButton
+        baseBg={isDark ? "#fff" : "#000"}
+        baseColor={isDark ? "#000" : "#fff"}
+        hoverBg={isDark ? "#000" : "#fff"}
+        hoverColor={isDark ? "#fff" : "#000"}
+        className={`hidden md:block border px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em] cursor-pointer ${isDark ? "border-white" : "border-black"}`}
+      />
 
-      {/* Full-screen mobile overlay */}
+      {/* Full-screen overlay */}
       {open && (
-        <div className="md:hidden absolute inset-0 z-20 bg-black flex flex-col px-4 py-6">
+        <div ref={overlayRef} className="fixed inset-0 z-50 bg-black flex flex-col px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-base tracking-[-0.04em] text-white capitalize">
-              H.Studio
-            </span>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="p-1 text-white"
-            >
+            <span className="font-semibold text-base tracking-[-0.04em] text-white capitalize">H.Studio</span>
+            <button onClick={closeMenu} aria-label="Close menu" className="p-1 text-white">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <line x1="2" y1="2" x2="18" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
                 <line x1="18" y1="2" x2="2" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
           </div>
-          <nav className="flex-1 flex flex-col justify-center gap-8">
-            {navLinks.map((link) => (
-              <a
+          <nav className="flex-1 flex flex-col justify-center items-center gap-8">
+            {navLinks.map((link, i) => (
+              <Link
                 key={link}
-                href={`#${link.toLowerCase()}`}
-                onClick={() => setOpen(false)}
-                className="font-semibold text-[40px] tracking-[-0.04em] text-white capitalize leading-none hover:opacity-60 transition-opacity"
+                ref={el => { linkRefs.current[i] = el; }}
+                href={HREF[link.toLowerCase()] ?? `/${link.toLowerCase()}`}
+                onClick={closeMenu}
+                className="font-semibold text-[40px] tracking-[-0.04em] text-white capitalize leading-none"
               >
                 {link}
-              </a>
+              </Link>
             ))}
           </nav>
-          <button
-            onClick={() => setOpen(false)}
-            className="self-start bg-white text-black px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em]"
-          >
-            Let&apos;s talk
-          </button>
+          <LetsTalkButton baseBg="#fff" baseColor="#000" hoverBg="#000" hoverColor="#fff" className="self-center border border-white px-4 py-3 rounded-full text-[14px] font-medium tracking-[-0.04em] cursor-pointer" />
         </div>
       )}
     </>
