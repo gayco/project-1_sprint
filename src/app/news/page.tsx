@@ -5,7 +5,7 @@ import NewsCard from "@/components/NewsCard";
 import NewsPageIntro from "@/components/NewsPageIntro";
 import SiteFooter from "@/components/SiteFooter";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 const NAV_LINKS = ["About", "Services", "Projects", "News", "Contact"] as const;
 

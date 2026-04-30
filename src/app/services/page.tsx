@@ -7,7 +7,7 @@ import ServiceItem from "@/components/ServiceItem";
 import ServicesPageIntro from "@/components/ServicesPageIntro";
 import SiteFooter from "@/components/SiteFooter";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 const NAV_LINKS = ["About", "Services", "Projects", "News", "Contact"] as const;
 

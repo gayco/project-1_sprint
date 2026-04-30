@@ -15,7 +15,7 @@ import TestimonialsDesktop from "@/components/TestimonialsDesktop";
 import NewsCard from "@/components/NewsCard";
 import SiteFooter from "@/components/SiteFooter";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 const HERO_IMAGE = "/hero.png";
 
